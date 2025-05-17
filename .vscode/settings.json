@@ -18,6 +18,10 @@
     "i2c_types.h": "c",
     "semphr.h": "c",
     "lm75a_driver.h": "c",
-    "cstdint": "c"
+    "cstdint": "c",
+    "i2c_utils.h": "c",
+    "freertos.h": "c",
+    "esp_mac.h": "c",
+    "esp_log.h": "c"
   }
 }

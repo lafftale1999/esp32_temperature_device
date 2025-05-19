@@ -4,11 +4,15 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/semphr.h>
 
+// Set to 1 for Fahrenheit or 0 for Celsius
+#define TEMPERATURE_UNIT 0
+
 // Set by connecting A0 - A2 to either VCC (1) or GND (0)
 // LM75A uses a 7-bit adress whereas the 4 most significant bits are set as 1001.
-#define LM75A_UNIT_ADDRESS            0x48
-#define LM75A_UNIT_ADDRESS_LENGTH     I2C_ADDR_BIT_LEN_7
-#define LM75A_DATA_LENGTH             2           // Defines the size of data buffer
+#define LM75A_UNIT_ADDRESSES          {0x48}                // Array of addresses used on the I2C bus
+#define LM75A_AMOUNT_OF_UNITS         1                     // How many units are connected to the I2C bus
+#define LM75A_UNIT_ADDRESS_LENGTH     I2C_ADDR_BIT_LEN_7    // Address length - Either I2C_ADDR_BIT_LEN_7 or I2C_ADDR_BIT_LEN_10
+#define LM75A_DATA_LENGTH             2                     // Defines the size of data buffer
 
 // The component four data registers and one additional Product ID register
 // Theses are selected by the Pointer Register
@@ -44,18 +48,25 @@ typedef struct LM75A_handle_internal *LM75A_handle_t;
     @return esp_err_t ESP_ERR_INVALID_ARG: I2C master transmit parameter invalid.
     ESP_ERR_TIMEOUT: Operation timeout(larger than xfer_timeout_ms) because the bus is busy or hardware crash.
     ESP_FAIL: Unable to perform any of the operations for reading.
+    ESP_OK: Temperature succesfully read and converted.
 */
-esp_err_t LM75A_i2c_read_temp(LM75A_handle_t handle);
+void LM75A_i2c_read_temp_task(void *pvParameters);
 
 /*
-    Creates a handle for the device and allocates the datastructure on heap.
+    Allocates the handles datastructure on the heap, fills it with the needed data and then redirects the passed
+    pointer to the datastructure.
 
     @param uint8_t device_address: The slave address for device used on the bus.
+    @param LM75A_handle_t *out_handle: pointer to be set to heap allocated datastructure.
 
-    @return LM75A_handle_t Returns a pointer to the initialized datastructure. If NULL - not initialized correctly
-    and the structure is destroyed.
+    @return esp_err_t 
+    ESP_OK: Successfully initialized the LM75A.
+    ESP_ERR_INVALID_ARG: Either I2C bus init failed because of invalid argument or unable to acquire bus handle.
+    ESP_ERR_NO_MEM: Create I2C bus failed because of out of memory
+    ESP_ERR_INVALID_STATE: Invalid state, such as the I2C port is not initialized.
+    ESP_FAIL: Unable to allocate memory on heap for device handle or failed to create mutex.
 */
-LM75A_handle_t LM75A_init(uint8_t device_address);
+esp_err_t LM75A_init(LM75A_handle_t *out_handle, uint8_t device_address);
 
 /*
     Deinitialize the LM75A datastructure.

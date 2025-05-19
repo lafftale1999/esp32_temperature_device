@@ -19,6 +19,6 @@
 
 esp_err_t i2c_register_read(i2c_master_dev_handle_t device_handle, uint8_t register_address, uint8_t *data, size_t len);
 esp_err_t i2c_register_write_byte(i2c_master_dev_handle_t device_handle, uint8_t register_address, uint8_t data);
-void i2c_master_init(i2c_master_bus_handle_t *bus_handle);
+esp_err_t i2c_master_init(i2c_master_bus_handle_t *bus_handle);
 
 #endif

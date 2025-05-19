@@ -16,45 +16,70 @@ struct LM75A_handle_internal{
     SemaphoreHandle_t xMutex;
 };
 
-esp_err_t LM75A_i2c_read_temp(LM75A_handle_t handle) {
-    esp_err_t ret = ESP_FAIL;
-    if(xSemaphoreTake(handle->xMutex, pdMS_TO_TICKS(WAIT_FOR_MUTEX_MS)) == pdTRUE) {
-        ret = i2c_register_read(handle->device, LM75A_TEMPERATURE_REGISTER, handle->data, handle->data_len);
-        
-        /*
-            When reading temp - LM75BD returns:
-            data[0] = MSB (8 bits)
-            data[1] = LSB (8 bits)
-
-            The result is a signed 11-bit value in two's complement form,
-            whereas only the most significant 11-bits are of value for temperature readings.
-
-            Down below is NXP recommended way to convert the information to Celsius.
-        */
-        int16_t raw = ((int16_t)handle->data[0] << 8) | handle->data[1];
-        raw >>= 5;
-        handle->raw_temp = (float)(raw * 0.125f);
-        // Temp converted
-        
-        if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to read temperature: %s", esp_err_to_name(ret));
-        } else {
-            ESP_LOGI(TAG, "LM75A Temp: %.2f °C", handle->raw_temp);
+void LM75A_i2c_read_temp_task(void *pvParameters) {
+    LM75A_handle_t handle = (LM75A_handle_t) pvParameters;
+    TickType_t xLastWakeTime = xTaskGetTickCount();
+    while(1) {
+        if(handle == NULL) {
+        ESP_LOGE(TAG, "Unable to parse handle when reading temperature");
         }
 
-        xSemaphoreGive(handle->xMutex);
-    } else {
-        return ESP_ERR_TIMEOUT;
-    }
+        else {
+            esp_err_t err = ESP_FAIL;
+            if(xSemaphoreTake(handle->xMutex, pdMS_TO_TICKS(WAIT_FOR_MUTEX_MS)) == pdTRUE) {
+                err = i2c_register_read(handle->device, LM75A_TEMPERATURE_REGISTER, handle->data, handle->data_len);
+                
+                /*
+                    When reading temp - LM75BD returns:
+                    data[0] = MSB (8 bits)
+                    data[1] = LSB (8 bits)
 
-    return ret;
+                    The result is a signed 11-bit value in two's complement form,
+                    whereas only the most significant 11-bits are of value for temperature readings.
+
+                    Down below is NXP recommended way to convert the information to Celsius.
+                */
+                int16_t raw = ((int16_t)handle->data[0] << 8) | handle->data[1];
+                raw >>= 5;
+                handle->raw_temp = (float)(raw * 0.125f);
+
+                if(TEMPERATURE_UNIT){
+                    handle->raw_temp = (handle->raw_temp * 9.0f / 5.0f) + 32.0f;
+                }
+                // Temp converted
+                
+                if (err != ESP_OK) {
+                ESP_LOGE(TAG, "Failed to read temperature: %s", esp_err_to_name(err));
+                } else {
+                    ESP_LOGI(TAG, "LM75A Temp: %.1f %s", handle->raw_temp, TEMPERATURE_UNIT ? "F" : "C");
+                }
+
+                xSemaphoreGive(handle->xMutex);
+            } else {
+                ESP_LOGE(TAG, "Failed to acquire mutex: %s", esp_err_to_name(err));
+            }
+        }
+        vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(1000));
+    }
 }
 
-LM75A_handle_t LM75A_init(uint8_t device_address) {
+SemaphoreHandle_t get_LM75a_mutex(LM75A_handle_t handle) {
+    if(handle->xMutex != NULL) {
+        return handle->xMutex;
+    }
+    else {
+        ESP_LOGE(TAG, "Mutex not created");
+        return NULL;
+    }
+    
+}
+
+esp_err_t LM75A_init(LM75A_handle_t *out_handle, uint8_t device_address) {
     LM75A_handle_t handle = malloc(sizeof(struct LM75A_handle_internal));
+    esp_err_t err = ESP_FAIL;
 
     if(handle == NULL) {
-        ESP_LOGE(TAG, "Unable to create device handle...");
+        ESP_LOGE(TAG, "Unable to allocate memory for device handle...");
         goto exit;
     }
 
@@ -75,7 +100,7 @@ LM75A_handle_t LM75A_init(uint8_t device_address) {
     };
 
     i2c_master_bus_handle_t bus;
-    esp_err_t err = i2c_master_get_bus_handle(MASTER_I2C_PORT, &bus);
+    err = i2c_master_get_bus_handle(MASTER_I2C_PORT, &bus);
 
     if(err != ESP_OK) {
         ESP_LOGE(TAG, "Unable to acquire bus handle");
@@ -90,7 +115,8 @@ LM75A_handle_t LM75A_init(uint8_t device_address) {
     }
 
     ESP_LOGI(TAG, "LM75A initialized on address: %d", handle->address);
-    return handle;
+    *out_handle = handle;
+    return ESP_OK;
 
 exit:
     if(handle != NULL) {
@@ -105,7 +131,8 @@ exit:
         free(handle);
     }
     
-    return NULL;
+    *out_handle = NULL;
+    return err;
 }
 
 esp_err_t LM75A_deinit(LM75A_handle_t handle) {

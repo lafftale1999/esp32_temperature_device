@@ -19,6 +19,7 @@ esp_err_t i2c_register_read(i2c_master_dev_handle_t device_handle, uint8_t regis
 
     if(device_handle == NULL) {
         ESP_LOGE(TAG, "Device handle is NULL before I2C read");
+        return ESP_ERR_INVALID_ARG;
     }
     
     esp_err_t ret = ESP_FAIL;
@@ -63,7 +64,7 @@ esp_err_t i2c_register_write_byte(i2c_master_dev_handle_t device_handle, uint8_t
     return ret; 
 }
 
-void i2c_master_init(i2c_master_bus_handle_t *bus_handle) {
+esp_err_t i2c_master_init(i2c_master_bus_handle_t *bus_handle) {
     i2c_master_bus_config_t bus_config = {
         .i2c_port = MASTER_I2C_PORT,
         .sda_io_num = MASTER_SDA_PIN,
@@ -79,8 +80,10 @@ void i2c_master_init(i2c_master_bus_handle_t *bus_handle) {
 
     if(i2c_mutex == NULL) {
         ESP_LOGE(TAG, "Failed to create mutex...");
-        return;
+        return ESP_FAIL;
     }
 
     ESP_LOGI(TAG, "I2C successfully initialized");
+
+    return ESP_OK;
 }

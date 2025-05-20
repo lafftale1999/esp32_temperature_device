@@ -23,13 +23,11 @@ void app_main(void)
     LM75A_handle_t devices[LM75A_AMOUNT_OF_UNITS];
     uint8_t device_addresses[] = LM75A_UNIT_ADDRESSES;
 
-    ESP_ERROR_CHECK(wifi_init());
+    // ESP_ERROR_CHECK(wifi_init());
     ESP_ERROR_CHECK(i2c_master_init(&bus_handle));
-
     for(int i = 0; i < LM75A_AMOUNT_OF_UNITS; i++) {
         ESP_ERROR_CHECK(LM75A_init(&devices[i], device_addresses[i]));
-        char task_name[16];
-        snprintf(task_name, sizeof(task_name), "temp_task_%d", i);
-        xTaskCreate(LM75A_i2c_read_temp_task, task_name, 2048, devices[i], 5, NULL);
     }
+
+    xTaskCreate(LM75A_i2c_read_temp_task, "temp_task", 2048, devices, 5, NULL);
 }

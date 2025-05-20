@@ -4,12 +4,13 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/semphr.h>
 
-// Set to 1 for Fahrenheit or 0 for Celsius
-#define TEMPERATURE_UNIT 0
+
+#define TEMPERATURE_UNIT 0            // Set to 1 for Fahrenheit or 0 for Celsius
+#define READING_INTERVAL_MS 1000      // Set interval in MS for reading temperature 
 
 // Set by connecting A0 - A2 to either VCC (1) or GND (0)
 // LM75A uses a 7-bit adress whereas the 4 most significant bits are set as 1001.
-#define LM75A_UNIT_ADDRESSES          {0x48}                // Array of addresses used on the I2C bus
+#define LM75A_UNIT_ADDRESSES          {0x48}                // Array of addresses used on the I2C bus. Add your addresses here
 #define LM75A_AMOUNT_OF_UNITS         1                     // How many units are connected to the I2C bus
 #define LM75A_UNIT_ADDRESS_LENGTH     I2C_ADDR_BIT_LEN_7    // Address length - Either I2C_ADDR_BIT_LEN_7 or I2C_ADDR_BIT_LEN_10
 #define LM75A_DATA_LENGTH             2                     // Defines the size of data buffer

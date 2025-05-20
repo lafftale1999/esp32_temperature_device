@@ -43,45 +43,42 @@ A temperature reader matching the model used in this program.
 ### 1. Configure project
 Open up the project in a code editor and change the following settings to what fits your project:
 
+**LM75A_driver.h**  
+Here you configure everything regarding the temperature sensors used in your system. The LM75A has enough addresses to support 8 different devices on the same I2C connection.
+```c
+#define TEMPERATURE_UNIT 0            // Set to 1 for Fahrenheit or 0 for Celsius
+#define READING_INTERVAL_MS 1000      // Set interval in MS for reading temperature 
+
+#define LM75A_UNIT_ADDRESSES          {0x48}                // Array of addresses used on the I2C bus. Add your addresses here
+#define LM75A_AMOUNT_OF_UNITS         1                     // How many units are connected to the I2C bus
+#define LM75A_UNIT_ADDRESS_LENGTH     I2C_ADDR_BIT_LEN_7    // Address length - Either I2C_ADDR_BIT_LEN_7 or I2C_ADDR_BIT_LEN_10
+#define LM75A_DATA_LENGTH             2                     // Defines the number of integers needed for the buffer when communicating
 ```
-LM75A_driver.h
-#define 
+  
+**i2c_utils.h**  
+Here you configure the I2C connection to fit your needs. Remember that using a higher frequency might require you to use lower resistance for the pull-up drain.
+```c
+#define MASTER_SDA_PIN          GPIO_NUM_7      // GPIO for SDA
+#define MASTER_SCL_PIN          GPIO_NUM_6      // GPIO for SCL
+#define MASTER_I2C_PORT         I2C_NUM_0       // ESP32 Internal I2C module
+#define MASTER_FREQUENCY        100000          // Unit: Hz
+#define MASTER_TX_BUF_DISABLE   0
+#define MASTER_RX_BUF_DISABLE   0
+#define MASTER_TIMEOUT_MS       1000
+
+#define MAX_AMOUNT_OF_TRIES     3
+#define WAIT_FOR_MUTEX_MS       50
 ```
+
 ### 2. Build project
 Navigate to this folder on your computer in the ESP-IDF CMD shell and use this command `idf.py build`
 
 ### 3. Flash to device
 Using the device manager - locate which COM port your ESP32 is connected to and use this to flash your device. In this example I use COM3. `idf.py -p COM3 flash monitor`
 
-###
+You will now be able to the see the logging messages on your screen.
 
-(See the README.md file in the upper level 'examples' directory for more information about examples.)
+## About the author
+My name is Carl. I am currently studying IoT and Embedded Development. I develop projects on my free time to apply and enrichen the things I learn at school.
 
-This is the simplest buildable example. The example is used by command `idf.py create-project`
-that copies the project to user specified path and set it's name. For more information follow the [docs page](https://docs.espressif.com/projects/esp-idf/en/latest/api-guides/build-system.html#start-a-new-project)
-
-
-
-## How to use example
-We encourage the users to use the example as a template for the new projects.
-A recommended way is to follow the instructions on a [docs page](https://docs.espressif.com/projects/esp-idf/en/latest/api-guides/build-system.html#start-a-new-project).
-
-## Example folder contents
-
-The project **sample_project** contains one source file in C language [main.c](main/main.c). The file is located in folder [main](main).
-
-ESP-IDF projects are built using CMake. The project build configuration is contained in `CMakeLists.txt`
-files that provide set of directives and instructions describing the project's source files and targets
-(executable, library, or both). 
-
-Below is short explanation of remaining files in the project folder.
-
-```
-├── CMakeLists.txt
-├── main
-│   ├── CMakeLists.txt
-│   └── main.c
-└── README.md                  This is the file you are currently reading
-```
-Additionally, the sample project contains Makefile and component.mk files, used for the legacy Make based build system. 
-They are not used or needed when building with CMake and idf.py.
+If you have any questions regarding this or any of my other projects, feel free to reach out!

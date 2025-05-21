@@ -17,49 +17,52 @@ struct LM75A_handle_internal{
 };
 
 void LM75A_i2c_read_temp_task(void *pvParameters) {
-    LM75A_handle_t handle = (LM75A_handle_t) pvParameters;
+    LM75A_handle_t* devices = (LM75A_handle_t*) pvParameters;
     TickType_t xLastWakeTime = xTaskGetTickCount();
+    
     while(1) {
-        if(handle == NULL) {
-        ESP_LOGE(TAG, "Unable to parse handle when reading temperature");
-        }
-
-        else {
-            esp_err_t err = ESP_FAIL;
-            if(xSemaphoreTake(handle->xMutex, pdMS_TO_TICKS(WAIT_FOR_MUTEX_MS)) == pdTRUE) {
-                err = i2c_register_read(handle->device, LM75A_TEMPERATURE_REGISTER, handle->data, handle->data_len);
-                
-                /*
-                    When reading temp - LM75BD returns:
-                    data[0] = MSB (8 bits)
-                    data[1] = LSB (8 bits)
-
-                    The result is a signed 11-bit value in two's complement form,
-                    whereas only the most significant 11-bits are of value for temperature readings.
-
-                    Down below is NXP recommended way to convert the information to Celsius.
-                */
-                int16_t raw = ((int16_t)handle->data[0] << 8) | handle->data[1];
-                raw >>= 5;
-                handle->raw_temp = (float)(raw * 0.125f);
-
-                if(TEMPERATURE_UNIT){
-                    handle->raw_temp = (handle->raw_temp * 9.0f / 5.0f) + 32.0f;
-                }
-                // Temp converted
-                
-                if (err != ESP_OK) {
-                ESP_LOGE(TAG, "Failed to read temperature: %s", esp_err_to_name(err));
-                } else {
-                    ESP_LOGI(TAG, "LM75A Temp: %.1f %s", handle->raw_temp, TEMPERATURE_UNIT ? "F" : "C");
-                }
-
-                xSemaphoreGive(handle->xMutex);
-            } else {
-                ESP_LOGE(TAG, "Failed to acquire mutex: %s", esp_err_to_name(err));
+        for(int i = 0; i < LM75A_AMOUNT_OF_UNITS; i++) {
+            if(devices[i] == NULL) {
+            ESP_LOGE(TAG, "Unable to parse handle when reading temperature");
             }
-        }
-        vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(1000));
+
+            else {
+                esp_err_t err = ESP_FAIL;
+                if(xSemaphoreTake(devices[i]->xMutex, pdMS_TO_TICKS(WAIT_FOR_MUTEX_MS)) == pdTRUE) {
+                    err = i2c_register_read(devices[i]->device, LM75A_TEMPERATURE_REGISTER, devices[i]->data, devices[i]->data_len);
+                    
+                    /*
+                        When reading temp - LM75BD returns:
+                        data[0] = MSB (8 bits)
+                        data[1] = LSB (8 bits)
+
+                        The result is a signed 11-bit value in two's complement form,
+                        whereas only the most significant 11-bits are of value for temperature readings.
+
+                        Down below is NXP recommended way to convert the information to Celsius.
+                    */
+                    int16_t raw = ((int16_t)devices[i]->data[0] << 8) | devices[i]->data[1];
+                    raw >>= 5;
+                    devices[i]->raw_temp = (float)(raw * 0.125f);
+
+                    if(TEMPERATURE_UNIT){
+                        devices[i]->raw_temp = (devices[i]->raw_temp * 9.0f / 5.0f) + 32.0f;
+                    }
+                    // Temp converted
+                    
+                    if (err != ESP_OK) {
+                    ESP_LOGE(TAG, "Failed to read temperature: %s", esp_err_to_name(err));
+                    } else {
+                        ESP_LOGI(TAG, "LM75A Temp: %.1f %s", devices[i]->raw_temp, TEMPERATURE_UNIT ? "F" : "C");
+                    }
+
+                    xSemaphoreGive(devices[i]->xMutex);
+                } else {
+                    ESP_LOGE(TAG, "Failed to acquire mutex: %s", esp_err_to_name(err));
+                }
+            }
+        } 
+        xTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(READING_INTERVAL_MS));
     }
 }
 

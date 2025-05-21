@@ -54,7 +54,7 @@ void LM75A_i2c_read_temp_task(void *pvParameters);
 
 /*
     Allocates the handles datastructure on the heap, fills it with the needed data and then redirects the passed
-    pointer to the datastructure.
+    pointer to the datastructure. Also creates and adds a device to the I2C bus.
 
     @param uint8_t device_address: The slave address for device used on the bus.
     @param LM75A_handle_t *out_handle: pointer to be set to heap allocated datastructure.

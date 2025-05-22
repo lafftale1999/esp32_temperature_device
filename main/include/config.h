@@ -3,5 +3,5 @@
 
 #define WIFI_SSID "admin"
 #define WIFI_PASS "example123"
-
+#define test
 #endif

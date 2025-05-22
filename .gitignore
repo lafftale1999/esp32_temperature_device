@@ -2,4 +2,4 @@ build/
 sdkconfig
 sdkconfig.old
 components/
-include/config.h
+main/include/config.h

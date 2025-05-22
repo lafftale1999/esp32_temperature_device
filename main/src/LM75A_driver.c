@@ -53,7 +53,7 @@ void LM75A_i2c_read_temp_task(void *pvParameters) {
                     if (err != ESP_OK) {
                     ESP_LOGE(TAG, "Failed to read temperature: %s", esp_err_to_name(err));
                     } else {
-                        ESP_LOGI(TAG, "LM75A Temp: %.1f %s", devices[i]->raw_temp, TEMPERATURE_UNIT ? "F" : "C");
+                        ESP_LOGI(TAG, "LM75A Address: %x | Temp: %.1f %s", devices[i]->address, devices[i]->raw_temp, TEMPERATURE_UNIT ? "F" : "C");
                     }
 
                     xSemaphoreGive(devices[i]->xMutex);

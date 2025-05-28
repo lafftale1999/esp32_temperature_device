@@ -1,11 +1,11 @@
 # ESP32 Temperature Sensor
-This project is aimed to learn more about I2C communication, writing drivers and using the MQTT protocol over WiFi to publish temperature information.
+This project is aimed to learn more about I2C communication and writing a driver for the LM75A.
 
 ## Highlights
 * LM75A driver made to support several devices on the same I2C bus.
 * Separation of bus-creating and adding devices to the bus.
 * Opaque pointers to an internal struct
-* MQTT communication with a local server
+* WiFi-connection for future features.
 
 ## Overview
 This project contains the following include files:
@@ -70,6 +70,21 @@ Here you configure the I2C connection to fit your needs. Remember that using a h
 #define WAIT_FOR_MUTEX_MS       50
 ```
 
+**config.h**
+Here you configure your wifi credentials.
+```c
+#define WIFI_SSID "admin"
+#define WIFI_PASS "example123"
+```
+
+**sdkconfig**
+
+Change the following lines to your ESP32 version.
+
+`CONFIG_IDF_TARGET="esp32c3"`
+
+`CONFIG_IDF_TARGET_ESP32C3=y`
+
 ### 2. Build project
 Navigate to this folder on your computer in the ESP-IDF CMD shell and use this command `idf.py build`
 
@@ -77,6 +92,9 @@ Navigate to this folder on your computer in the ESP-IDF CMD shell and use this c
 Using the device manager - locate which COM port your ESP32 is connected to and use this to flash your device. In this example I use COM3. `idf.py -p COM3 flash monitor`
 
 You will now be able to the see the logging messages on your screen.
+
+## Future features
+Communication with MQTT broker to publish temperature readings.
 
 ## About the author
 My name is Carl. I am currently studying IoT and Embedded Development. I develop projects on my free time to apply and enrichen the things I learn at school.

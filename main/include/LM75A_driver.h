@@ -11,8 +11,8 @@
 #define TEMPERATURE_UNIT 0            // Set to 1 for Fahrenheit or 0 for Celsius
 #define READING_INTERVAL_MS 1000      // Set interval in MS for reading temperature 
 
-#define LM75A_UNIT_ADDRESSES          {0x48,0x49}                // Array of addresses used on the I2C bus. Add your addresses here
-#define LM75A_AMOUNT_OF_UNITS         2                     // How many units are connected to the I2C bus
+#define LM75A_UNIT_ADDRESSES          {0x48}                // Array of addresses used on the I2C bus. Add your addresses here
+#define LM75A_AMOUNT_OF_UNITS         1                     // How many units are connected to the I2C bus
 #define LM75A_UNIT_ADDRESS_LENGTH     I2C_ADDR_BIT_LEN_7    // Address length - Either I2C_ADDR_BIT_LEN_7 or I2C_ADDR_BIT_LEN_10
 #define LM75A_DATA_LENGTH             2                     // Defines the number of integers needed for the buffer when communicating
 
